@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZYNOR — Calculadora 3D & Catálogo</title>
+  <style>
+    /* ========================================================================
+       ESTILOS VISUAIS DA ZYNOR (CORES, CARTÕES, EDIÇÃO E TABELA)
+       ======================================================================== */
+    :root {
+      --zynor-dark: #031844;
+      --zynor-mid: #083982;
+      --zynor-cyan: #00A8E8;
+      --accent: #0f172a;
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --border: #cbd5e1;
+      --text: #1e293b;
+      --muted: #64748b;
+      --success: #059669;
+      --edit-bg: #fef3c7;
+      --edit-border: #f59e0b;
+    }
+
+    * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+    body { margin: 0; background: var(--bg); color: var(--text); padding: 20px; }
+    .container { max-width: 1480px; margin: 0 auto; }
+
+    /* CABEÇALHO OFICIAL ZYNOR */
+    header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 22px;
+      background: linear-gradient(135deg, var(--zynor-dark) 0%, var(--zynor-mid) 65%, #0d4ca6 100%);
+      color: #ffffff;
+      padding: 14px 28px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(3, 24, 68, 0.25);
+      border-bottom: 3px solid var(--zynor-cyan);
+    }
+
+    .brand-box { display: flex; align-items: center; gap: 16px; }
+    .brand-title {
+      margin: 0;
+      font-size: 1.95rem;
+      font-weight: 800;
+      letter-spacing: 3.5px;
+      text-transform: uppercase;
+      background: linear-gradient(180deg, #ffffff 35%, #bae6fd 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+    }
+
+    /* LAYOUT DIVIDIDO: ESQUERDA (CALCULADORA) | DIREITA (CADASTRO + PDF) */
+    .split-dashboard { display: grid; grid-template-columns: 1.2fr 0.95fr; gap: 24px; margin-bottom: 24px; align-items: start; }
+    @media (max-width: 1100px) { .split-dashboard { grid-template-columns: 1fr; } }
+
+    .panel { background: var(--card); padding: 22px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 6px rgba(0,0,0,0.04); margin-bottom: 20px; transition: border 0.2s; }
+    .panel.editing-mode { border: 2px solid var(--edit-border); box-shadow: 0 4px 14px rgba(245, 158, 11, 0.18); }
+
+    .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--bg); padding-bottom: 12px; margin-bottom: 18px; }
+    .panel-header h2 { margin: 0; font-size: 1.15rem; color: var(--zynor-dark); }
+    .tag { background: #e0f2fe; color: var(--zynor-mid); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+
+    /* BANNER DE MODO EDIÇÃO */
+    .edit-banner {
+      display: none;
+      background: var(--edit-bg);
+      border: 1px solid var(--edit-border);
+      color: #92400e;
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn-cancel-edit {
+      background: #ffffff;
+      border: 1px solid #d97706;
+      color: #b45309;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-cancel-edit:hover { background: #fef3c7; }
+
+    /* BLOCOS NUMERADOS DA CALCULADORA */
+    .calc-section { border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 16px; background: #ffffff; }
+    .sec-title { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .sec-badge { background: var(--zynor-mid); color: white; width: 24px; height: 24px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; }
+    .sec-title h3 { margin: 0; font-size: 0.98rem; color: var(--accent); }
+    .sec-sub { font-size: 0.75rem; color: var(--muted); display: block; }
+
+    .form-group { margin-bottom: 12px; }
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+    label { display: block; font-size: 0.78rem; font-weight: 600; color: #475569; margin-bottom: 5px; }
+    input, select, textarea { width: 100%; padding: 8px 11px; border: 1px solid var(--border); border-radius: 7px; font-size: 0.9rem; transition: 0.2s; background: #fff; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--zynor-mid); box-shadow: 0 0 0 3px rgba(8, 57, 130, 0.12); }
+
+    /* BOTÕES CLICÁVEIS (PÍLULAS) */
+    .preset-group { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+    .preset-btn { padding: 5px 10px; border-radius: 20px; border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    .preset-btn:hover { border-color: var(--zynor-mid); background: #eff6ff; }
+    .preset-btn.active { background: var(--zynor-mid); color: #ffffff; border-color: var(--zynor-mid); box-shadow: 0 2px 5px rgba(8, 57, 130, 0.25); }
+
+    .toggle-row { display: flex; align-items: center; gap: 10px; margin: 12px 0; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--zynor-dark); }
+    .toggle-row input { width: 18px; height: 18px; cursor: pointer; accent-color: var(--zynor-mid); }
+
+    /* RESULTADO DA CALCULADORA */
+    .hero-price-card { background: linear-gradient(135deg, var(--zynor-dark) 0%, var(--zynor-mid) 100%); color: white; padding: 20px; border-radius: 12px; margin-top: 15px; box-shadow: 0 6px 15px rgba(3, 24, 68, 0.2); }
+    .hero-label { font-size: 0.75rem; letter-spacing: 1px; text-transform: uppercase; color: #bae6fd; font-weight: 700; }
+    .hero-value { font-size: 2.2rem; font-weight: 800; margin: 4px 0; }
+    .hero-sub { font-size: 0.8rem; color: #cbd5e1; }
+
+    .metrics-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 12px; }
+    .metric-box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 12px; border-radius: 8px; }
+    .metric-box span { display: block; font-size: 0.7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; }
+    .metric-box strong { font-size: 1.05rem; color: var(--accent); }
+
+    .breakdown-box { margin-top: 14px; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; }
+    .bar-track { display: flex; height: 10px; border-radius: 6px; overflow: hidden; background: #e2e8f0; margin: 10px 0 14px 0; }
+    .bar-seg { height: 100%; transition: width 0.3s ease; }
+    .bd-row { display: flex; justify-content: space-between; font-size: 0.82rem; padding: 4px 0; border-bottom: 1px dashed #f1f5f9; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+
+    /* SELETOR DE MÚLTIPLAS CORES */
+    .color-grid { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: #f8fafc; }
+    .color-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 20px; border: 1px solid #cbd5e1; background: #fff; font-size: 0.78rem; font-weight: 600; cursor: pointer; user-select: none; }
+    .color-chip.selected { background: var(--zynor-dark); color: #fff; border-color: var(--zynor-dark); }
+    .color-dot { width: 11px; height: 11px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.25); }
+
+    .auto-field { background-color: #f8fafc; font-weight: 700; color: var(--zynor-mid); }
+    .calc-linked { background-color: #ecfdf5; border-color: #6ee7b7; font-weight: 700; color: #065f46; }
+    .hint { font-size: 0.72rem; color: var(--zynor-mid); margin-top: 4px; display: block; font-weight: 500; }
+
+    .btn-primary { width: 100%; padding: 13px; background: linear-gradient(135deg, var(--zynor-mid), var(--zynor-dark)); color: white; border: none; border-radius: 8px; font-size: 0.98rem; font-weight: 700; cursor: pointer; margin-top: 12px; transition: 0.2s; }
+    .btn-primary:hover { opacity: 0.92; }
+    .btn-primary.update-mode { background: linear-gradient(135deg, #d97706, #b45309); }
+    .btn-primary:disabled { background: #94a3b8; cursor: not-allowed; }
+    .btn-pdf { width: 100%; padding: 12px; background: #2563eb; color: white; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 700; cursor: pointer; margin-top: 12px; }
+    .btn-pdf:hover { background: #1d4ed8; }
+
+    /* TABELA DE PRODUTOS CADASTRADOS */
+    .search-box { width: 100%; padding: 10px 15px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 15px; font-size: 0.95rem; }
+    .table-container { overflow-x: auto; max-height: 450px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th, td { padding: 11px 12px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    th { background: #f8fafc; position: sticky; top: 0; font-weight: 700; color: var(--zynor-dark); }
+    tbody tr:hover { background-color: #f0f9ff; }
+    .sku-pill { background: #e2e8f0; padding: 3px 8px; border-radius: 4px; font-family: monospace; font-weight: 700; font-size: 0.82rem; color: #0f172a; }
+
+    /* LINK CLICÁVEL DO NOME DO PRODUTO PARA EDIÇÃO */
+    .prod-edit-link {
+      color: var(--zynor-mid);
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 6px;
+      border-radius: 6px;
+      transition: background 0.15s;
+    }
+    .prod-edit-link:hover {
+      background: #e0f2fe;
+      text-decoration: underline;
+    }
+    .edit-icon { font-size: 0.78rem; opacity: 0.75; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- CABEÇALHO OFICIAL ZYNOR -->
+  <header>
+    <div class="brand-box">
+      <svg width="48" height="48" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="ringGrad" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#38BDF8"/>
+            <stop offset="50%" stop-color="#FFFFFF"/>
+            <stop offset="100%" stop-color="#0284C7"/>
+          </linearGradient>
+          <linearGradient id="zGrad" x1="20" y1="20" x2="80" y2="80" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#38BDF8"/>
+            <stop offset="100%" stop-color="#E0F2FE"/>
+          </linearGradient>
+        </defs>
+        <circle cx="50" cy="50" r="44" stroke="url(#ringGrad)" stroke-width="5"/>
+        <circle cx="50" cy="50" r="37" stroke="#7DD3FC" stroke-width="1.5" stroke-opacity="0.6"/>
+        <path d="M28 30H72L42 66H73V74H26L56 38H28V30Z" fill="url(#zGrad)"/>
+        <polygon points="50,45 55,52 50,59 45,52" fill="#00A8E8" stroke="#FFFFFF" stroke-width="1"/>
+      </svg>
+      <h1 class="brand-title">ZYNOR</h1>
+    </div>
+  </header>
+
+  <div class="split-dashboard">
+    
+    <!-- ======================================================================
+         LADO ESQUERDO: CALCULADORA DE CUSTOS 3D
+         ====================================================================== -->
+    <div>
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Calculadora de Custos 3D</h2>
+          <span class="tag">Atualiza ao editar</span>
+        </div>
+
+        <!-- 1. FILAMENTO E BANDEJA -->
+        <div class="calc-section">
+          <div class="sec-title">
+            <span class="sec-badge">1</span>
+            <div>
+              <h3>Filamento e Bandeja</h3>
+              <span class="sec-sub">Material e quantidade usada na mesa de impressão</span>
+            </div>
+          </div>
+          <div class="row-3">
+            <div>
+              <label>Peças na Bandeja (un)</label>
+              <input type="number" id="calcQtdBandeja" value="1" min="1" step="1" oninput="calcularTudo()">
+            </div>
+            <div>
+              <label>Preço do filamento (R$/kg)</label>
+              <input type="number" id="calcPrecoKg" value="99.00" step="0.01" oninput="calcularTudo()">
+            </div>
+            <div>
+              <label>Quantidade utilizada (g)</label>
+              <input type="number" id="calcPeso" value="149" step="0.1" oninput="calcularTudo()">
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. ENERGIA E TEMPO -->
+        <div class="calc-section">
+          <div class="sec-title">
+            <span class="sec-badge">2</span>
+            <div>
+              <h3>Energia e tempo</h3>
+              <span class="sec-sub">Consumo médio da impressora e tarifa de energia</span>
+            </div>
+          </div>
+
+          <div class="row-2 form-group">
+            <div>
+              <label>Tempo de impressão (Horas e Minutos)</label>
+              <div class="row-2">
+                <input type="number" id="calcHoras" value="7" min="0" placeholder="h" oninput="calcularTudo()">
+                <input type="number" id="calcMinutos" value="47" min="0" max="59" placeholder="min" oninput="calcularTudo()">
+              </div>
+            </div>
+
+            <div>
+              <label>Consumo médio (W) — Editável</label>
+              <input type="number" id="calcWatts" value="200" oninput="limparPreset('presetWatts'); calcularTudo()">
+              <div class="preset-group" id="presetWatts">
+                <button type="button" class="preset-btn" onclick="selecionarWatts(120, this)">Ender 3 · 120W</button>
+                <button type="button" class="preset-btn active" onclick="selecionarWatts(200, this)">Bambu A1 · 200W</button>
+                <button type="button" class="preset-btn" onclick="selecionarWatts(350, this)">Bambu X1C · 350W</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="row-2">
+            <div>
+              <label>Tarifa Base Estado (R$/kWh)</label>
+              <select id="calcEstado" onchange="aplicarEstadoKwh()">
+                <option value="0.7596">SP — São Paulo (R$ 0,7596)</option>
+                <option value="0.8500">RJ — Rio de Janeiro (R$ 0,8500)</option>
+                <option value="0.7900">MG — Minas Gerais (R$ 0,7900)</option>
+                <option value="0.7200">PR — Paraná (R$ 0,7200)</option>
+                <option value="0.7400">SC — Santa Catarina (R$ 0,7400)</option>
+                <option value="0.7600">RS — Rio Grande do Sul (R$ 0,7600)</option>
+              </select>
+            </div>
+
+            <div>
+              <label>Valor final do kWh (R$/kWh) — Editável</label>
+              <input type="number" id="calcKwhFinal" value="0.8046" step="0.0001" oninput="limparPreset('presetBandeira'); calcularTudo()">
+              <div class="preset-group" id="presetBandeira">
+                <button type="button" class="preset-btn" onclick="selecionarBandeira(0, this)">Verde</button>
+                <button type="button" class="preset-btn" onclick="selecionarBandeira(0.019, this)">Amarela +0,019</button>
+                <button type="button" class="preset-btn active" onclick="selecionarBandeira(0.045, this)">Vermelha 1 +0,045</button>
+                <button type="button" class="preset-btn" onclick="selecionarBandeira(0.079, this)">Vermelha 2 +0,079</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. DESGASTE DA IMPRESSORA -->
+        <div class="calc-section">
+          <div class="sec-title">
+            <span class="sec-badge">3</span>
+            <div>
+              <h3>Desgaste da impressora (opcional)</h3>
+              <span class="sec-sub">Divide o valor da máquina pelas horas de vida útil</span>
+            </div>
+          </div>
+          <div class="row-2">
+            <div>
+              <label>Preço da impressora (R$)</label>
+              <input type="number" id="calcPrecoMaquina" value="3500.00" step="50" oninput="calcularTudo()">
+            </div>
+            <div>
+              <label>Vida útil estimada (horas) — Editável</label>
+              <input type="number" id="calcVidaUtil" value="5000" step="100" oninput="limparPreset('presetVida'); calcularTudo()">
+              <div class="preset-group" id="presetVida">
+                <button type="button" class="preset-btn" onclick="selecionarVidaUtil(3000, this)">3.000h</button>
+                <button type="button" class="preset-btn active" onclick="selecionarVidaUtil(5000, this)">5.000h</button>
+                <button type="button" class="preset-btn" onclick="selecionarVidaUtil(8000, this)">8.000h</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. CUSTOS EXTRAS E LUCRO -->
+        <div class="calc-section">
+          <div class="sec-title">
+            <span class="sec-badge">4</span>
+            <div>
+              <h3>Custos extras e lucro</h3>
+              <span class="sec-sub">Mão de obra, embalagem, frete, margem e taxas</span>
+            </div>
+          </div>
+
+          <div class="row-3 form-group">
+            <div>
+              <label>Mão de obra (R$)</label>
+              <input type="number" id="calcMaoObra" value="5.00" step="0.50" oninput="calcularTudo()">
+            </div>
+            <div>
+              <label>Custos fixos por peça (R$)</label>
+              <input type="number" id="calcFixos" value="0.00" step="0.50" oninput="calcularTudo()">
+            </div>
+            <div>
+              <label>Taxa de falhas (%)</label>
+              <input type="number" id="calcFalhas" value="5" step="1" oninput="calcularTudo()">
+            </div>
+          </div>
+
+          <label class="toggle-row">
+            <input type="checkbox" id="toggleEmbFrete" onchange="alternarEmbFrete()">
+            Incluir custos de embalagem e frete
+          </label>
+
+          <div id="boxEmbFrete" style="display:none; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:12px;">
+            <div class="row-3">
+              <div>
+                <label>Embalagem (R$)</label>
+                <input type="number" id="calcEmbalagem" value="3.50" step="0.10" oninput="calcularTudo()">
+              </div>
+              <div>
+                <label>Frete (R$)</label>
+                <input type="number" id="calcFrete" value="0.00" step="1" oninput="calcularTudo()">
+              </div>
+              <div>
+                <label>Tratar Frete</label>
+                <select id="calcModoFrete" onchange="calcularTudo()">
+                  <option value="repasse">Repassar (sem lucro)</option>
+                  <option value="custo">Incluir no custo</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="row-2">
+            <div>
+              <label>Quanto você quer de lucro? (% sobre custo)</label>
+              <input type="number" id="calcMargem" value="56" step="1" oninput="limparPreset('presetMargem'); calcularTudo()">
+              <div class="preset-group" id="presetMargem">
+                <button type="button" class="preset-btn" onclick="selecionarMargem(20, this)">20%</button>
+                <button type="button" class="preset-btn" onclick="selecionarMargem(30, this)">30%</button>
+                <button type="button" class="preset-btn" onclick="selecionarMargem(50, this)">50%</button>
+                <button type="button" class="preset-btn" onclick="selecionarMargem(100, this)">100%</button>
+              </div>
+            </div>
+
+            <div>
+              <label>Taxas e impostos sobre a venda (%)</label>
+              <input type="number" id="calcTaxas" value="12" step="0.5" oninput="limparPreset('presetTaxas'); calcularTudo()">
+              <div class="preset-group" id="presetTaxas">
+                <button type="button" class="preset-btn" onclick="selecionarTaxa(6, this)">Simples · 6%</button>
+                <button type="button" class="preset-btn active" onclick="selecionarTaxa(12, this)">Marketplace · 12%</button>
+                <button type="button" class="preset-btn" onclick="selecionarTaxa(18, this)">Marketplace+ · 18%</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RESUMO FINANCEIRO DA CALCULADORA -->
+        <div class="hero-price-card">
+          <div class="hero-label">PREÇO DE VENDA SUGERIDO (BANDEJA)</div>
+          <div class="hero-value" id="heroPreco">R$ 0,00</div>
+          <div class="hero-sub" id="heroTempoPeso">0h 00min de impressão · 0 g de filamento</div>
+        </div>
+
+        <div class="metrics-3">
+          <div class="metric-box">
+            <span>CUSTO TOTAL</span>
+            <strong id="metCusto">R$ 0,00</strong>
+          </div>
+          <div class="metric-box">
+            <span>LUCRO LÍQUIDO</span>
+            <strong id="metLucro" style="color:#059669;">R$ 0,00</strong>
+          </div>
+          <div class="metric-box">
+            <span>MARGEM REAL</span>
+            <strong id="metMargemReal">0,0%</strong>
+          </div>
+        </div>
+
+        <div class="breakdown-box">
+          <strong style="font-size:0.85rem; color:#0f172a;">Para onde vai o preço</strong>
+          <div class="bar-track">
+            <div class="bar-seg" id="barMat" style="background:#3b82f6; width:20%;"></div>
+            <div class="bar-seg" id="barEne" style="background:#f97316; width:10%;"></div>
+            <div class="bar-seg" id="barMaq" style="background:#64748b; width:10%;"></div>
+            <div class="bar-seg" id="barExt" style="background:#eab308; width:20%;"></div>
+            <div class="bar-seg" id="barTax" style="background:#7c3aed; width:15%;"></div>
+            <div class="bar-seg" id="barLuc" style="background:#10b981; width:25%;"></div>
+          </div>
+          <div class="bd-row"><span><i class="dot" style="background:#3b82f6;"></i>Filamento</span><strong id="bdMat">R$ 0,00</strong></div>
+          <div class="bd-row"><span><i class="dot" style="background:#f97316;"></i>Energia</span><strong id="bdEne">R$ 0,00</strong></div>
+          <div class="bd-row"><span><i class="dot" style="background:#64748b;"></i>Desgaste Máquina</span><strong id="bdMaq">R$ 0,00</strong></div>
+          <div class="bd-row"><span><i class="dot" style="background:#eab308;"></i>Mão de obra / Extras</span><strong id="bdExt">R$ 0,00</strong></div>
+          <div class="bd-row"><span><i class="dot" style="background:#7c3aed;"></i>Taxas e impostos</span><strong id="bdTax">R$ 0,00</strong></div>
+          <div class="bd-row" style="border:none;"><span><i class="dot" style="background:#10b981;"></i>Lucro</span><strong id="bdLuc" style="color:#059669;">R$ 0,00</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         LADO DIREITO: CADASTRO / EDIÇÃO DE PRODUTO + GERADOR DE ORÇAMENTO EM PDF
+         ====================================================================== -->
+    <div>
+      <div class="panel" id="painelCadastro">
+        <div class="panel-header">
+          <h2 id="tituloCadastro">Cadastro de Produto</h2>
+          <span class="tag" id="tagModoCadastro">Novo registro</span>
+        </div>
+
+        <!-- BANNER EXIBIDO QUANDO UM PRODUTO DA LISTA É CLICADO PARA EDIÇÃO -->
+        <div class="edit-banner" id="bannerEdicao">
+          <span>✏️ Editando: <strong id="nomeProdutoEditando"></strong></span>
+          <button type="button" class="btn-cancel-edit" onclick="cancelarEdicao()">Cancelar Edição</button>
+        </div>
+
+        <div class="form-group">
+          <label>Produto</label>
+          <input type="text" id="prodNome" placeholder="Ex: Suporte Celular Chaveiro, Vaso Espiral 16x05..." oninput="analisarProdutoInteligente()">
+          <span class="hint" id="ncmJustificativa">💡 Digite o produto para sugerir automaticamente NCM (PLA) e SKU.</span>
+        </div>
+
+        <div class="form-group">
+          <label>Cor (Selecione 1 ou mais cores): <strong id="textoCoresSelecionadas" style="color:#083982;">Preto</strong></label>
+          <div class="color-grid" id="gridCores"></div>
+        </div>
+
+        <div class="row-3 form-group">
+          <div>
+            <label>Categoria</label>
+            <select id="prodCategoria" onchange="atualizarNCMporCategoria()">
+              <option value="Decoração">Decoração</option>
+              <option value="Utilidades">Utilidades</option>
+              <option value="Cozinha">Cozinha</option>
+              <option value="Tecnologia">Tecnologia</option>
+              <option value="Escritório">Escritório</option>
+              <option value="Banheiro">Banheiro</option>
+              <option value="Pet">Pet</option>
+              <option value="Religioso">Religioso</option>
+              <option value="Brinquedo">Brinquedo</option>
+            </select>
+          </div>
+          <div>
+            <label>NCM</label>
+            <input type="text" id="prodNcm" class="auto-field" value="39264000">
+          </div>
+          <div>
+            <label>SKU</label>
+            <input type="text" id="prodSku" class="auto-field" placeholder="GERADO-AUTO">
+          </div>
+        </div>
+
+        <div class="row-3 form-group">
+          <div>
+            <label>Unidade (Bandeja)</label>
+            <input type="text" id="cadUnidadeBandeja" class="calc-linked" readonly>
+          </div>
+          <div>
+            <label>Preço (Bandeja)</label>
+            <input type="text" id="cadPrecoBandeja" class="calc-linked" readonly>
+          </div>
+          <div>
+            <label>Preço (Unidade)</label>
+            <input type="text" id="cadPrecoUnidade" class="calc-linked" readonly>
+          </div>
+        </div>
+
+        <button type="button" class="btn-primary" id="btnSalvar" onclick="salvarOuAtualizarRegistro()">
+          💾 Gravar Produto Cadastrado
+        </button>
+      </div>
+
+      <!-- GERADOR DE ORÇAMENTO EM PDF -->
+      <div class="panel">
+        <div class="panel-header">
+          <h2>📄 Gerar orçamento em PDF</h2>
+          <span class="tag">Pronto para cliente</span>
+        </div>
+
+        <div class="row-2 form-group">
+          <div>
+            <label>Sua empresa / seu nome *</label>
+            <input type="text" id="orcEmpresa" value="ZYNOR 3D">
+          </div>
+          <div>
+            <label>Nome do cliente *</label>
+            <input type="text" id="orcCliente" placeholder="Ex: Maria Silva">
+          </div>
+        </div>
+
+        <div class="row-2 form-group">
+          <div>
+            <label>Descrição do serviço *</label>
+            <input type="text" id="orcServico" placeholder="Ex: Suporte para celular personalizado">
+          </div>
+          <div>
+            <label>Material</label>
+            <input type="text" id="orcMaterial" value="PLA">
+          </div>
+        </div>
+
+        <div class="row-3 form-group">
+          <div>
+            <label>Quantidade (un)</label>
+            <input type="number" id="orcQtd" value="1" min="1">
+          </div>
+          <div>
+            <label>Prazo de entrega</label>
+            <input type="text" id="orcPrazo" placeholder="Ex: 5 dias úteis">
+          </div>
+          <div>
+            <label>Validade (opcional)</label>
+            <input type="text" id="orcValidade" placeholder="Ex: 7 dias">
+          </div>
+        </div>
+
+        <div class="row-2 form-group">
+          <div>
+            <label>Forma de pagamento 1</label>
+            <input type="text" id="orcPgto1" placeholder="Ex: Pix">
+          </div>
+          <div>
+            <label>Desconto Pgto 1 (%)</label>
+            <input type="number" id="orcDesc1" value="5" min="0" max="100">
+          </div>
+        </div>
+
+        <div class="row-2 form-group">
+          <div>
+            <label>Forma de pagamento 2 (opcional)</label>
+            <input type="text" id="orcPgto2" placeholder="Ex: Cartão 2x">
+          </div>
+          <div>
+            <label>Desconto Pgto 2 (%)</label>
+            <input type="number" id="orcDesc2" value="0" min="0" max="100">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Observações (opcional)</label>
+          <textarea id="orcObs" rows="2" placeholder="Ex: Acabamento lixado e pintado. Retirada no local ou envio por Sedex."></textarea>
+        </div>
+
+        <button type="button" class="btn-pdf" onclick="exportarOrcamentoPDF()">
+          📄 Exportar orçamento em PDF
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ========================================================================
+       TABELA DE CONSULTA E EDIÇÃO: PRODUTOS CADASTRADOS
+       ======================================================================== -->
+  <div class="panel">
+    <div class="panel-header">
+      <div>
+        <h2>📋 Produtos Cadastrados</h2>
+        <span style="font-size:0.75rem; color:#64748b;">💡 Clique no nome de qualquer produto abaixo para carregar e editar os dados.</span>
+      </div>
+      <span id="contadorItens" class="tag">0 itens</span>
+    </div>
+    <input type="text" id="buscaTabela" class="search-box" placeholder="🔍 Consultar por Produto, Cor, Categoria, NCM ou SKU..." onkeyup="filtrarTabela()">
+    
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Produto</th>
+            <th>Cor</th>
+            <th>Categoria</th>
+            <th>NCM</th>
+            <th>SKU</th>
+            <th>Unidade Prato</th>
+            <th>Peso Total (g)</th>
+            <th>Tempo Impressão</th>
+            <th>Preço (Bandeja)</th>
+            <th>Preço (Unidade)</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaCorpo">
+          <tr><td colspan="10" style="text-align:center; padding:20px;">Carregando Produtos Cadastrados...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  let baseProdutos = []; // Lista de objetos { rowIndex: number, cols: [...] }
+  let linhaEmEdicao = null; // null = Novo produto | number = Linha na planilha sendo editada
+  let bandeiraAtual = 0.045;
+  let valoresCalculados = { qtdBandeja: 1, precoBandeja: 0, precoUnidade: 0, peso: 0, tempoFormatado: "0h 00min" };
+
+  const LISTA_CORES = [
+    { nome: "Preto", sigla: "PT", hex: "#1e293b" },
+    { nome: "Branco", sigla: "BR", hex: "#ffffff" },
+    { nome: "Cinza", sigla: "CZ", hex: "#94a3b8" },
+    { nome: "Marron", sigla: "MR", hex: "#78350f" },
+    { nome: "Grafite", sigla: "GF", hex: "#475569" },
+    { nome: "Vermelho", sigla: "VM", hex: "#dc2626" },
+    { nome: "Azul", sigla: "AZ", hex: "#2563eb" },
+    { nome: "Verde", sigla: "VD", hex: "#16a34a" },
+    { nome: "Amarelo", sigla: "AM", hex: "#eab308" },
+    { nome: "Laranja", sigla: "LJ", hex: "#f97316" },
+    { nome: "Rosa", sigla: "RS", hex: "#ec4899" },
+    { nome: "Roxo", sigla: "RX", hex: "#9333ea" },
+    { nome: "Dourado", sigla: "DR", hex: "#d97706" },
+    { nome: "Prata", sigla: "PR", hex: "#cbd5e1" },
+    { nome: "Sortido", sigla: "SORT", hex: "linear-gradient(45deg, #ef4444, #3b82f6, #22c55e)" }
+  ];
+  let coresSelecionadas = ["Preto"];
+
+  window.onload = function() {
+    renderizarSeletorCores();
+    calcularTudo();
+    carregarPlanilha();
+  };
+
+  /* --------------------------------------------------------------------------
+     CONVERSÃO E FORMATAÇÃO FIEL DE TEMPO (HORAS E MINUTOS)
+     -------------------------------------------------------------------------- */
+  function formatarTempoHorasMinutos(valorBruto) {
+    if (valorBruto === null || valorBruto === undefined || valorBruto === "") return "-";
+    const str = String(valorBruto).trim();
+    // Se já estiver no formato "14h 06min" ou "14h06min"
+    if (str.includes("h")) return str;
+
+    // Se for um número decimal antigo (ex: 14.1), converte para Horas e Minutos
+    const num = parseFloat(str.replace(",", "."));
+    if (isNaN(num)) return str;
+
+    const h = Math.floor(num);
+    const m = Math.round((num - h) * 60);
+    return `${h}h ${String(m).padStart(2, '0')}min`;
+  }
+
+  function extrairHorasEMinutos(valorBruto) {
+    const str = String(valorBruto || "").trim();
+    // Caso 1: Texto no formato "14h 06min" ou "14h 6min"
+    const match = str.match(/(\d+)\s*h\s*(\d+)/i);
+    if (match) {
+      return { horas: parseInt(match[1], 10) || 0, minutos: parseInt(match[2], 10) || 0 };
+    }
+    // Caso 2: Número decimal antigo (ex: 14.1 -> 14h e 6min)
+    const num = parseFloat(str.replace(",", "."));
+    if (!isNaN(num)) {
+      const h = Math.floor(num);
+      const m = Math.round((num - h) * 60);
+      return { horas: h, minutos: m };
+    }
+    return { horas: 0, minutos: 0 };
+  }
+
+  /* --------------------------------------------------------------------------
+     CONTROLES DA CALCULADORA 3D
+     -------------------------------------------------------------------------- */
+  function limparPreset(groupId) {
+    document.querySelectorAll(`#${groupId} .preset-btn`).forEach(b => b.classList.remove('active'));
+  }
+
+  function ativarBotao(groupId, btn) {
+    limparPreset(groupId);
+    if (btn) btn.classList.add('active');
+  }
+
+  function selecionarWatts(valor, btn) { document.getElementById('calcWatts').value = valor; ativarBotao('presetWatts', btn); calcularTudo(); }
+  function aplicarEstadoKwh() { const base = parseFloat(document.getElementById('calcEstado').value) || 0; document.getElementById('calcKwhFinal').value = (base + bandeiraAtual).toFixed(4); calcularTudo(); }
+  function selecionarBandeira(adicional, btn) { bandeiraAtual = adicional; const base = parseFloat(document.getElementById('calcEstado').value) || 0; document.getElementById('calcKwhFinal').value = (base + adicional).toFixed(4); ativarBotao('presetBandeira', btn); calcularTudo(); }
+  function selecionarVidaUtil(horas, btn) { document.getElementById('calcVidaUtil').value = horas; ativarBotao('presetVida', btn); calcularTudo(); }
+  function selecionarMargem(pct, btn) { document.getElementById('calcMargem').value = pct; ativarBotao('presetMargem', btn); calcularTudo(); }
+  function selecionarTaxa(pct, btn) { document.getElementById('calcTaxas').value = pct; ativarBotao('presetTaxas', btn); calcularTudo(); }
+  function alternarEmbFrete() { document.getElementById('boxEmbFrete').style.display = document.getElementById('toggleEmbFrete').checked ? 'block' : 'none'; calcularTudo(); }
+
+  function calcularTudo() {
+    const qtdBandeja = Math.max(1, parseInt(document.getElementById('calcQtdBandeja').value) || 1);
+    const precoKg = parseFloat(document.getElementById('calcPrecoKg').value) || 0;
+    const peso = parseFloat(document.getElementById('calcPeso').value) || 0;
+
+    const horas = Math.max(0, parseInt(document.getElementById('calcHoras').value) || 0);
+    const minutos = Math.max(0, parseInt(document.getElementById('calcMinutos').value) || 0);
+    const tempoTotalHoras = horas + (minutos / 60);
+    const tempoFormatado = `${horas}h ${String(minutos).padStart(2, '0')}min`;
+
+    const watts = parseFloat(document.getElementById('calcWatts').value) || 0;
+    const kwhFinal = parseFloat(document.getElementById('calcKwhFinal').value) || 0;
+
+    const precoMaq = parseFloat(document.getElementById('calcPrecoMaquina').value) || 0;
+    const vidaUtil = Math.max(1, parseFloat(document.getElementById('calcVidaUtil').value) || 5000);
+    const custoHoraMaquina = precoMaq / vidaUtil;
+
+    const maoObra = parseFloat(document.getElementById('calcMaoObra').value) || 0;
+    const fixos = parseFloat(document.getElementById('calcFixos').value) || 0;
+    const falhasPct = parseFloat(document.getElementById('calcFalhas').value) || 0;
+
+    const usaEmbFrete = document.getElementById('toggleEmbFrete').checked;
+    const embalagem = usaEmbFrete ? (parseFloat(document.getElementById('calcEmbalagem').value) || 0) : 0;
+    const frete = usaEmbFrete ? (parseFloat(document.getElementById('calcFrete').value) || 0) : 0;
+    const modoFrete = document.getElementById('calcModoFrete').value;
+
+    const margemPct = parseFloat(document.getElementById('calcMargem').value) || 0;
+    const taxasPct = parseFloat(document.getElementById('calcTaxas').value) || 0;
+
+    const custoFilamento = (peso / 1000) * precoKg;
+    const custoEnergia = (watts / 1000) * tempoTotalHoras * kwhFinal;
+    const custoDesgaste = tempoTotalHoras * custoHoraMaquina;
+    const freteNoCusto = (modoFrete === 'custo') ? frete : 0;
+    const freteRepasse = (modoFrete === 'repasse') ? frete : 0;
+
+    const subtotalBase = custoFilamento + custoEnergia + custoDesgaste + maoObra + fixos + embalagem + freteNoCusto;
+    const reservaFalhas = subtotalBase * (falhasPct / 100);
+    const custoTotalBandeja = subtotalBase + reservaFalhas;
+    const custoExtrasTotal = maoObra + fixos + embalagem + freteNoCusto + reservaFalhas;
+
+    const lucroBandeja = custoTotalBandeja * (margemPct / 100);
+    const divisorTaxa = 1 - (taxasPct / 100);
+    const precoAntesRepasse = divisorTaxa > 0 ? ((custoTotalBandeja + lucroBandeja) / divisorTaxa) : (custoTotalBandeja + lucroBandeja);
+    const precoVendaBandeja = precoAntesRepasse + freteRepasse;
+    const valorTaxas = precoAntesRepasse * (taxasPct / 100);
+
+    const margemRealPct = precoVendaBandeja > 0 ? ((lucroBandeja / precoVendaBandeja) * 100) : 0;
+    const precoUnidade = precoVendaBandeja / qtdBandeja;
+
+    document.getElementById('heroPreco').innerText = moeda(precoVendaBandeja);
+    document.getElementById('heroTempoPeso').innerText = `${tempoFormatado} de impressão · ${peso} g de filamento`;
+    document.getElementById('metCusto').innerText = moeda(custoTotalBandeja);
+    document.getElementById('metLucro').innerText = moeda(lucroBandeja);
+    document.getElementById('metMargemReal').innerText = margemRealPct.toFixed(1).replace('.', ',') + "%";
+
+    document.getElementById('bdMat').innerText = moeda(custoFilamento);
+    document.getElementById('bdEne').innerText = moeda(custoEnergia);
+    document.getElementById('bdMaq').innerText = moeda(custoDesgaste);
+    document.getElementById('bdExt').innerText = moeda(custoExtrasTotal);
+    document.getElementById('bdTax').innerText = moeda(valorTaxas);
+    document.getElementById('bdLuc').innerText = moeda(lucroBandeja);
+
+    const baseBar = Math.max(0.01, precoVendaBandeja);
+    document.getElementById('barMat').style.width = ((custoFilamento / baseBar) * 100) + "%";
+    document.getElementById('barEne').style.width = ((custoEnergia / baseBar) * 100) + "%";
+    document.getElementById('barMaq').style.width = ((custoDesgaste / baseBar) * 100) + "%";
+    document.getElementById('barExt').style.width = ((custoExtrasTotal / baseBar) * 100) + "%";
+    document.getElementById('barTax').style.width = ((valorTaxas / baseBar) * 100) + "%";
+    document.getElementById('barLuc').style.width = ((lucroBandeja / baseBar) * 100) + "%";
+
+    document.getElementById('cadUnidadeBandeja').value = qtdBandeja;
+    document.getElementById('cadPrecoBandeja').value = moeda(precoVendaBandeja);
+    document.getElementById('cadPrecoUnidade').value = moeda(precoUnidade);
+    document.getElementById('orcQtd').value = qtdBandeja;
+
+    valoresCalculados = {
+      qtdBandeja: qtdBandeja,
+      precoBandeja: precoVendaBandeja.toFixed(2),
+      precoUnidade: precoUnidade.toFixed(2),
+      peso: peso,
+      tempoFormatado: tempoFormatado
+    };
+  }
+
+  /* --------------------------------------------------------------------------
+     EDIÇÃO INTERATIVA AO CLICAR NO NOME DO PRODUTO NA LISTA
+     -------------------------------------------------------------------------- */
+  function carregarProdutoParaEdicao(rowIndex) {
+    const registro = baseProdutos.find(item => item.rowIndex === rowIndex);
+    if (!registro) return;
+
+    const r = registro.cols;
+    linhaEmEdicao = rowIndex;
+
+    // 1. Preenche dados da Calculadora (Unidade Prato, Peso e Tempo em Horas/Minutos)
+    document.getElementById('calcQtdBandeja').value = Number(r[5]) || 1;
+    document.getElementById('calcPeso').value = Number(r[6]) || 0;
+    const tempoObj = extrairHorasEMinutos(r[7]);
+    document.getElementById('calcHoras').value = tempoObj.horas;
+    document.getElementById('calcMinutos').value = tempoObj.minutos;
+
+    // 2. Preenche dados do Cadastro de Produto
+    document.getElementById('prodNome').value = r[0] || "";
+    document.getElementById('orcServico').value = r[0] || "";
+
+    // Restaura as cores selecionadas (ex: "Preto/Marron")
+    const coresTexto = String(r[1] || "Preto").split("/").map(c => c.trim()).filter(Boolean);
+    coresSelecionadas = coresTexto.length > 0 ? coresTexto : ["Preto"];
+    renderizarSeletorCores();
+
+    // Categoria, NCM e SKU
+    if (r[2]) document.getElementById('prodCategoria').value = r[2];
+    document.getElementById('prodNcm').value = r[3] || "";
+    document.getElementById('prodSku').value = r[4] || "";
+
+    // Recalcula e mantém os valores sincronizados
+    calcularTudo();
+    if (r[8] !== "" && r[8] !== null) {
+      document.getElementById('cadPrecoBandeja').value = moeda(r[8]);
+      valoresCalculados.precoBandeja = Number(r[8]).toFixed(2);
+    }
+    if (r[9] !== "" && r[9] !== null) {
+      document.getElementById('cadPrecoUnidade').value = moeda(r[9]);
+      valoresCalculados.precoUnidade = Number(r[9]).toFixed(2);
+    }
+
+    // 3. Ativa o visual de Modo Edição e rola suavemente para o topo
+    document.getElementById('painelCadastro').classList.add('editing-mode');
+    document.getElementById('tituloCadastro').innerText = "Editar Produto";
+    document.getElementById('tagModoCadastro').innerText = "Linha #" + rowIndex;
+    document.getElementById('tagModoCadastro').style.background = "#fef3c7";
+    document.getElementById('tagModoCadastro').style.color = "#92400e";
+
+    document.getElementById('bannerEdicao').style.display = "flex";
+    document.getElementById('nomeProdutoEditando').innerText = r[0] || "";
+
+    const btn = document.getElementById('btnSalvar');
+    btn.classList.add('update-mode');
+    btn.innerText = "🔄 Salvar Alterações do Produto";
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function cancelarEdicao() {
+    linhaEmEdicao = null;
+    document.getElementById('painelCadastro').classList.remove('editing-mode');
+    document.getElementById('tituloCadastro').innerText = "Cadastro de Produto";
+    document.getElementById('tagModoCadastro').innerText = "Novo registro";
+    document.getElementById('tagModoCadastro').style.background = "#e0f2fe";
+    document.getElementById('tagModoCadastro').style.color = "#083982";
+    document.getElementById('bannerEdicao').style.display = "none";
+
+    document.getElementById('prodNome').value = "";
+    document.getElementById('prodSku').value = "";
+    coresSelecionadas = ["Preto"];
+    renderizarSeletorCores();
+
+    const btn = document.getElementById('btnSalvar');
+    btn.classList.remove('update-mode');
+    btn.innerText = "💾 Gravar Produto Cadastrado";
+  }
+
+  /* --------------------------------------------------------------------------
+     GERADOR DE ORÇAMENTO EM PDF
+     -------------------------------------------------------------------------- */
+  function exportarOrcamentoPDF() {
+    const empresa = document.getElementById('orcEmpresa').value || "ZYNOR 3D";
+    const cliente = document.getElementById('orcCliente').value || "Cliente";
+    const servico = document.getElementById('orcServico').value || document.getElementById('prodNome').value || "Impressão 3D Personalizada";
+    const material = document.getElementById('orcMaterial').value || "PLA";
+    const qtd = parseInt(document.getElementById('orcQtd').value) || 1;
+    const prazo = document.getElementById('orcPrazo').value || "A combinar";
+    const validade = document.getElementById('orcValidade').value || "7 dias";
+    const pgto1 = document.getElementById('orcPgto1').value || "Pix";
+    const desc1 = parseFloat(document.getElementById('orcDesc1').value) || 0;
+    const pgto2 = document.getElementById('orcPgto2').value;
+    const desc2 = parseFloat(document.getElementById('orcDesc2').value) || 0;
+    const obs = document.getElementById('orcObs').value;
+
+    const unitario = parseFloat(valoresCalculados.precoUnidade) || 0;
+    const totalBruto = unitario * qtd;
+    const totalPgto1 = totalBruto * (1 - desc1 / 100);
+    const totalPgto2 = totalBruto * (1 - desc2 / 100);
+    const dataHoje = new Date().toLocaleDateString('pt-BR');
+
+    const win = window.open('', '_blank');
+    win.document.write(`
+      <html>
+      <head>
+        <title>Orçamento - ${empresa}</title>
+        <style>
+          body { font-family: 'Segoe UI', sans-serif; padding: 40px; color: #1e293b; }
+          .top { background: #031844; color: #fff; padding: 24px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
+          .top h1 { margin: 0; letter-spacing: 3px; font-size: 26px; }
+          .box { border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin-top: 20px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+          th, td { border-bottom: 1px solid #e2e8f0; padding: 12px; text-align: left; }
+          th { background: #f8fafc; color: #031844; }
+          .total-box { background: #ecfdf5; border: 1px solid #6ee7b7; padding: 16px; border-radius: 8px; margin-top: 20px; }
+          .footer { margin-top: 40px; font-size: 12px; color: #64748b; text-align: center; }
+        </style>
+      </head>
+      <body>
+        <div class="top">
+          <div><h1>${empresa}</h1><small>Orçamento de Impressão 3D</small></div>
+          <div style="text-align:right;"><strong>Data:</strong> ${dataHoje}<br><strong>Validade:</strong> ${validade}</div>
+        </div>
+        <div class="box">
+          <strong>Cliente:</strong> ${cliente}<br>
+          <strong>Prazo de Entrega:</strong> ${prazo}
+        </div>
+        <table>
+          <thead><tr><th>Descrição do Serviço</th><th>Material / Cor</th><th>Qtd</th><th>Valor Unit.</th><th>Subtotal</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>${servico}</strong></td>
+              <td>${material} (${coresSelecionadas.join('/')})</td>
+              <td>${qtd} un</td>
+              <td>${moeda(unitario)}</td>
+              <td><strong>${moeda(totalBruto)}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="total-box">
+          <strong>Condições de Pagamento:</strong><br><br>
+          • <strong>${pgto1}:</strong> ${moeda(totalPgto1)} ${desc1 > 0 ? `(com ${desc1}% de desconto)` : ''}<br>
+          ${pgto2 ? `• <strong>${pgto2}:</strong> ${moeda(totalPgto2)} ${desc2 > 0 ? `(com ${desc2}% de desconto)` : ''}` : ''}
+        </div>
+        ${obs ? `<div class="box"><strong>Observações:</strong><br>${obs}</div>` : ''}
+        <div class="footer">Documento gerado pelo sistema ${empresa}</div>
+        <script>window.onload = function() { window.print(); };<\/script>
+      </body>
+      </html>
+    `);
+    win.document.close();
+  }
+
+  /* --------------------------------------------------------------------------
+     CORES, NCM E SKU AUTOMÁTICOS
+     -------------------------------------------------------------------------- */
+  function renderizarSeletorCores() {
+    const container = document.getElementById('gridCores');
+    container.innerHTML = LISTA_CORES.map(c => {
+      const ativo = coresSelecionadas.includes(c.nome) ? 'selected' : '';
+      return `<div class="color-chip ${ativo}" onclick="alternarCor('${c.nome}')"><span class="color-dot" style="background:${c.hex};"></span>${c.nome}</div>`;
+    }).join('');
+    document.getElementById('textoCoresSelecionadas').innerText = coresSelecionadas.join('/');
+  }
+
+  function alternarCor(nomeCor) {
+    if (coresSelecionadas.includes(nomeCor)) {
+      if (coresSelecionadas.length > 1) coresSelecionadas = coresSelecionadas.filter(c => c !== nomeCor);
+    } else {
+      coresSelecionadas.push(nomeCor);
+    }
+    renderizarSeletorCores();
+    gerarSKU();
+  }
+
+  const REGRAS_NCM_PLA = [
+    { categoria: "Decoração", ncm: "39264000", motivo: "NCM 3926.40.00 — Estatuetas e objetos de ornamentação/decoração (PLA).", palavras: ["vaso", "cachepot", "escultura", "estatua", "busto", "barquinho", "incenso", "quadro", "luminaria", "enfeite", "decorativo", "mandala"] },
+    { categoria: "Religioso", ncm: "39264000", motivo: "NCM 3926.40.00 — Imagens e objetos religiosos ornamentais (PLA).", palavras: ["nossa senhora", "virgem", "santo", "santa", "jesus", "cristo", "crucifixo", "terco", "oracao", "anjo", "buda"] },
+    { categoria: "Brinquedo", ncm: "95030099", motivo: "NCM 9503.00.99 — Brinquedos e modelos reduzidos em plástico.", palavras: ["dino", "dinossauro", "brinquedo", "boneco", "pocoyo", "carrinho", "mini", "articulado", "dragao", "fidget", "jogo"] },
+    { categoria: "Cozinha", ncm: "39241000", motivo: "NCM 3924.10.00 — Serviços de mesa e utensílios de cozinha (PLA).", palavras: ["cafe", "café", "dosador", "colher", "prato", "copo", "xicara", "forma", "cortador", "biscoito", "funil", "tampa", "medidor"] },
+    { categoria: "Banheiro", ncm: "39249000", motivo: "NCM 3924.90.00 — Artigos de higiene ou toucador (PLA).", palavras: ["escova", "dente", "cotonete", "algodao", "saboneteira", "banheiro", "barbeador", "maquiagem", "batom"] },
+    { categoria: "Pet", ncm: "39249000", motivo: "NCM 3924.90.00 — Utensílios domésticos para animais de estimação.", palavras: ["pet", "gato", "cachorro", "racao", "areia", "comedouro", "bebedouro"] },
+    { categoria: "Utilidades", ncm: "39249000", motivo: "NCM 3924.90.00 — Artigos de uso doméstico e organizadores (PLA).", palavras: ["cha", "chá", "dispenser", "guardanapo", "esponja", "pia", "joia", "organizador", "caixa", "pote", "cabide", "prendedor"] },
+    { categoria: "Escritório", ncm: "39261000", motivo: "NCM 3926.10.00 — Artigos de escritório e escolares (PLA).", palavras: ["escritorio", "caneta", "lapis", "cartao", "post it", "mesa", "monitor", "notebook", "headset"] },
+    { categoria: "Tecnologia", ncm: "39269090", motivo: "NCM 3926.90.90 — Outras obras de plástico (Suportes, ganchos e peças técnicas).", palavras: ["suporte", "celular", "alexa", "controle", "gancho", "parede", "clip", "chaveiro", "adaptador", "base", "escorador"] }
+  ];
+
+  function analisarProdutoInteligente() {
+    const raw = document.getElementById('prodNome').value;
+    document.getElementById('orcServico').value = raw;
+    const texto = raw.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const catSelect = document.getElementById('prodCategoria');
+    const ncmInput = document.getElementById('prodNcm');
+    const justificativa = document.getElementById('ncmJustificativa');
+
+    if (!texto.trim()) {
+      justificativa.innerText = "💡 Digite o produto para sugerir automaticamente NCM (PLA) e SKU.";
+      document.getElementById('prodSku').value = "";
+      return;
+    }
+
+    let encontrou = false;
+    for (const regra of REGRAS_NCM_PLA) {
+      if (regra.palavras.some(palavra => texto.includes(palavra))) {
+        catSelect.value = regra.categoria;
+        ncmInput.value = regra.ncm;
+        justificativa.innerText = "✅ " + regra.motivo;
+        encontrou = true;
+        break;
+      }
+    }
+    if (!encontrou) {
+      catSelect.value = "Utilidades";
+      ncmInput.value = "39269090";
+      justificativa.innerText = "ℹ️ NCM 3926.90.90 — Classificação geral para obras de plástico (PLA).";
+    }
+    gerarSKU();
+  }
+
+  function atualizarNCMporCategoria() {
+    const cat = document.getElementById('prodCategoria').value;
+    const regra = REGRAS_NCM_PLA.find(r => r.categoria === cat);
+    if (regra) {
+      document.getElementById('prodNcm').value = regra.ncm;
+      document.getElementById('ncmJustificativa').innerText = "✅ " + regra.motivo;
+    }
+  }
+
+  function gerarSKU() {
+    const nomeRaw = document.getElementById('prodNome').value;
+    if (!nomeRaw.trim()) { document.getElementById('prodSku').value = ""; return; }
+    const ignorar = ['DE', 'DA', 'DO', 'DOS', 'DAS', 'COM', 'PARA', 'E', 'EM', 'NO', 'NA'];
+    const tokens = nomeRaw.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z0-9\s]/g, '').split(/\s+/).filter(p => p.length > 0 && !ignorar.includes(p));
+    const palavrasSku = tokens.slice(0, 4).map(t => /\d/.test(t) ? t : (t.length > 5 ? t.substring(0, 4) : t));
+    const sufixoCor = coresSelecionadas.length === 1
+      ? coresSelecionadas[0].normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()
+      : coresSelecionadas.map(nome => (LISTA_CORES.find(c => c.nome === nome)?.sigla || nome.substring(0, 2).toUpperCase())).join('-');
+    document.getElementById('prodSku').value = `${palavrasSku.join('-')}-${sufixoCor}`;
+  }
+
+  /* --------------------------------------------------------------------------
+     COMUNICAÇÃO COM A PLANILHA GOOGLE (CARREGAR, SALVAR E ATUALIZAR)
+     -------------------------------------------------------------------------- */
+  function carregarPlanilha() {
+    google.script.run
+      .withSuccessHandler(atualizarTabela)
+      .withFailureHandler(err => {
+        document.getElementById('tabelaCorpo').innerHTML = `<tr><td colspan="10" style="text-align:center; color:#dc2626; padding:20px;">Erro ao carregar Produtos Cadastrados: ${err.message}</td></tr>`;
+      })
+      .obterProdutos();
+  }
+
+  function salvarOuAtualizarRegistro() {
+    const nome = document.getElementById('prodNome').value.trim();
+    if (!nome) { alert("Por favor, preencha o campo Produto antes de salvar."); return; }
+
+    const btn = document.getElementById('btnSalvar');
+    btn.disabled = true;
+    btn.innerText = linhaEmEdicao ? "⏳ Salvando alterações..." : "⏳ Gravando produto...";
+
+    const payload = {
+      produto: nome,
+      cor: coresSelecionadas.join('/'),
+      categoria: document.getElementById('prodCategoria').value,
+      ncm: document.getElementById('prodNcm').value,
+      sku: document.getElementById('prodSku').value,
+      qtdBandeja: valoresCalculados.qtdBandeja,
+      peso: valoresCalculados.peso,
+      tempoFormatado: valoresCalculados.tempoFormatado,
+      precoBandeja: valoresCalculados.precoBandeja,
+      precoUnidade: valoresCalculados.precoUnidade
+    };
+
+    if (linhaEmEdicao) {
+      google.script.run
+        .withSuccessHandler(function(listaAtualizada) {
+          atualizarTabela(listaAtualizada);
+          cancelarEdicao();
+          btn.disabled = false;
+          alert("Produto atualizado com sucesso!");
+        })
+        .withFailureHandler(function(err) {
+          alert("Erro ao atualizar: " + err.message);
+          btn.disabled = false;
+          btn.innerText = "🔄 Salvar Alterações do Produto";
+        })
+        .atualizarProdutoCompleto(linhaEmEdicao, payload);
+    } else {
+      google.script.run
+        .withSuccessHandler(function(listaAtualizada) {
+          atualizarTabela(listaAtualizada);
+          document.getElementById('prodNome').value = "";
+          document.getElementById('prodSku').value = "";
+          btn.disabled = false;
+          btn.innerText = "💾 Gravar Produto Cadastrado";
+          alert("Produto gravado com sucesso!");
+        })
+        .withFailureHandler(function(err) {
+          alert("Erro ao salvar: " + err.message);
+          btn.disabled = false;
+          btn.innerText = "💾 Gravar Produto Cadastrado";
+        })
+        .salvarProdutoCompleto(payload);
+    }
+  }
+
+  function atualizarTabela(dados) {
+    baseProdutos = dados || [];
+    document.getElementById('contadorItens').innerText = baseProdutos.length + (baseProdutos.length === 1 ? " item" : " itens");
+    renderizarLinhas(baseProdutos);
+  }
+
+  function renderizarLinhas(lista) {
+    const tbody = document.getElementById('tabelaCorpo');
+    if (lista.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:20px;">Nenhum produto cadastrado ainda.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = lista.map(item => {
+      const r = item.cols;
+      const tempoExibicao = formatarTempoHorasMinutos(r[7]);
+      return `
+        <tr>
+          <td>
+            <span class="prod-edit-link" onclick="carregarProdutoParaEdicao(${item.rowIndex})" title="Clique para editar este produto">
+              ${r[0] || ''} <span class="edit-icon">✏️</span>
+            </span>
+          </td>
+          <td>${r[1] || ''}</td>
+          <td>${r[2] || ''}</td>
+          <td>${r[3] || ''}</td>
+          <td><span class="sku-pill">${r[4] || ''}</span></td>
+          <td>${r[5] !== "" ? r[5] + " un" : "-"}</td>
+          <td>${r[6] !== "" ? r[6] + " g" : "-"}</td>
+          <td>${tempoExibicao}</td>
+          <td style="color:#083982; font-weight:700;">${r[8] !== "" ? moeda(r[8]) : "-"}</td>
+          <td style="color:#059669; font-weight:700;">${r[9] !== "" ? moeda(r[9]) : "-"}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function filtrarTabela() {
+    const termo = document.getElementById('buscaTabela').value.toLowerCase();
+    const filtrados = baseProdutos.filter(item => 
+      item.cols.slice(0, 5).some(col => String(col).toLowerCase().includes(termo))
+    );
+    renderizarLinhas(filtrados);
+  }
+
+  function moeda(v) {
+    return (parseFloat(v) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+</script>
+
+</body>
+</html>
